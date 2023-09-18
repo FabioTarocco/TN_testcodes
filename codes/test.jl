@@ -1,4 +1,5 @@
 using ITensors
+using PastaQ
 
 
 function heisenberg_mpo(N)
@@ -103,4 +104,53 @@ i = Index(6, "i")
 O1 = onehot(i=>6)
 @show O1
 
+i = Index(4, "i")
+j = Index(3, "j")
+l = Index(4, "l")
+
+A = randomITensor(i,j,l)
+
+trA = A * delta(i,l)
+@show trA
+
+T = randomITensor(i,j,l)
+U,S,Vh = svd(T,(i,j));
+
+@show norm(U*S*Vh - T)
+
+truncerr = (norm(U*S*Vh - T)/norm(T))^2
+
+
+i = Index(10, "i")
+j = Index(20, "j")
+k = Index(20, "k")
+
+T = randomITensor(i,j,k)
+
+U, S, Vh = svd(T, (i,k), cutoff = 1E-2);
+@show norm(U*S*Vh - T)
+@show (norm(U*S*Vh - T)/norm(T))^2
+
+
+T = randomITensor(i,j,k)
+
+Q, R = qr(T, (i,k); positive = true);
+
+C = combiner( i,k; tags = "c")
+
+@show C
+@show inds(C)
+
+combinedT = C*T
+@show inds(combinedT)
+
+combined_index = combinedind(C)
+
+T_ = randomITensor(i,k,i',j)
+T_ = C * T_
+T_ = noprime(T_)
+T_
+
+uncombined_combinedT = dag(C)*combinedT
+uncombined_combinedT == T
 
