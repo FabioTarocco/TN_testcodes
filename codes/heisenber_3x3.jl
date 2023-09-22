@@ -92,7 +92,6 @@ function reduced_rho(psi,i,j)
         #add the i-th site of psi by priming link_i-1
         rho *= prime(psi[i], link_i_1);
     end
-
     #add to rho all the intermediate sites of psi and psi^dag between site i and j
     for k in i+1:j-1
         rho *= psi_dag[k]
@@ -124,6 +123,7 @@ function reduced_rho_matrix(psi)
     
     for i in 1:N
         for j in i:N
+            println("Iter ($i-$j)",i,j)
             density_matrix[i,j] = reduced_rho(psi_8, i, j);
         end
     end
@@ -164,7 +164,7 @@ Nx = 3;
 Ny = 3;
 N = Nx * Ny;
 
-sites = siteinds("S=1/2", N; conserve_qns = false);
+sites = siteinds("S=1/2", N; conserve_qns = true);
 lattice = square_lattice(Nx, Ny; yperiodic=false);
 
 heisenberg_2D_sumOp = OpSum();
@@ -177,29 +177,37 @@ end
 
 #MPO of the 2D Heisenberg Hamiltonian
 heisenberg_2D_H = MPO(heisenberg_2D_sumOp, sites);
+@show heisenberg_2D_H[1]
 
 #Initial configuration of the sites of the system
 #initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
-initial_state = ["Dn" for n=1:N]
+
+
+initial_state = [isodd(n) ? "Dn" : "Up" for n=1:N]
+#initial_state = ["Up" for n=1:N]
 
 psi_init_8 = randomMPS(sites, initial_state, 2);
 psi_init_20 = randomMPS(sites, initial_state, 20);
 
 nsweeps = 10;
-maxdim_single = [1];
+maxdim_single = [8];
 maxdim_full = [20,60,100,200,400,800];
 cutoff = [1E-10];
 
 energy_8, psi_8 = dmrg(heisenberg_2D_H, psi_init_8; nsweeps, maxdim_single, cutoff);
 energy_dmrg, psi_dmrg = dmrg(heisenberg_2D_H, psi_init_20; nsweeps, maxdim_full, cutoff);
 
+if maxlinkdim(psi_dmrg) > 8
+    truncate!(psi_dmrg,maxdim = 8)
+end
+
 @show energy_8
 @show energy_dmrg
 
 
-full_DM = reduced_rho_matrix(psi_8)
+full_DM = reduced_rho_matrix(psi_8);
 
-I_matrix = MI(full_DM)
+I_matrix = MI(full_DM);
 
 @show I_matrix
 
