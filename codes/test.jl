@@ -154,3 +154,57 @@ T_
 uncombined_combinedT = dag(C)*combinedT
 uncombined_combinedT == T
 
+
+using ITensors
+p0 = QN("P", 0, 2)
+p1 = QN("P", 1, 2)
+a = QN(("N",0), ("Sz",1,2))
+b = QN("Sz", -1)
+
+a = a + b
+
+i = Index(  QN("N", 0) => 1,
+            QN("N", 1) => 3, 
+            QN("N", 2) =>2; tags = "i")
+dag_i = dag(i)
+
+
+#= 
+HARD-CORE BOSON
+
+a|1> = |0>
+a^dag|0> = |1>
+n|0> = 0|0>
+n|1> = 1|1>
+
+(out)|1>, (out)a(in) so it can be contracted (out)a(in)(out)|1> = (out)|0>
+=#
+
+s = Index(  QN("N", 0) => 1, 
+            QN("N", 1) => 1; tags = "Boson")
+a = ITensor(s', dag(s)) 
+#quindi 2 stati 0 e 1, con al massimo 1 occupazione, con indice dag(s)(in) per la contrazione e s'(out)
+a[s'=>1, s=>2] = 1.0
+a_dag = ITensor(s', dag(s))
+a_dag[s'=>2, s=>1] = 1.0
+n = ITensor(s', dag(s))
+n[s'=>2, s=>2] = 1.0
+
+
+
+I = Index( QN(0)=>1, QN(1)=>1, tags = "I")
+@show I
+dim(I)
+
+#indice J con 5 settori con dimensione variabile
+J = Index(QN(-2)=>2, QN(-1)=>4, QN(0)=>6, QN(+1)=>4, QN(+2)=>2, tags = "J")
+
+q2 = QN(("N",2),("Sz",2))
+QN("N",3) + QN(("Sz",2),("N",2)) == QN(("N",5),("Sz",2))
+
+QN("P",1,2) + QN("P",1,2)
+
+Sz = op("Sz",)
+
+
+sites = siteind("S=1/2", 2; conserve_qns=false)

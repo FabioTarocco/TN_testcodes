@@ -302,7 +302,7 @@ en_dmrg, psi_dmrg = dmrg(H, psi_0; nsweeps, maxdim, cutoff)
 
 #---------------------EXTENDED HUBBARD 1D  (S=1/2)  spin preserving ------------------------
 
-
+using ITensors
 N = 20
 Npart = 10
 t1 = 1.0
@@ -329,6 +329,14 @@ for i in 1:N
     os += U, "Nupdn",i
 end
 H = MPO(os, sites)
+
+
+cdn = op("Cdn", siteind("Electron"))
+
+@show op("Cdn", siteind("Electron")), op("Cdagdn", siteind("Electron"))
+
+@show op("Cup", siteind("Electron")), op("Cdagup", siteind("Electron"))
+
 
 nsweeps = 6
 maxdim = [50,100,200,400,800,800]

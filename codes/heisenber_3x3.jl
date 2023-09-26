@@ -7,6 +7,39 @@ HEISEBERG 2D (3x3 lattice, S=1/2) N = 9 sites
     -Compute MI for each couple 
 =#
 
+# Define the adjacency matrix A
+A = [
+    0 1 0 0 0 1 0 0 0;
+    0 0 1 0 1 0 0 0 0;
+    0 0 0 1 0 0 0 0 0;
+    0 0 0 0 1 0 0 0 1;
+    0 0 0 0 0 1 0 1 0;
+    0 0 0 0 0 0 1 0 0;
+    0 0 0 0 0 0 0 1 0;
+    0 0 0 0 0 0 0 0 1;
+    0 0 0 0 0 0 0 0 0;
+]
+
+# Get the number of nodes
+num_nodes = size(A, 1)
+
+# Initialize a list to store the pairs of edges
+edge_pairs = []
+
+# Iterate over each node pair (i, j) to find edges
+for i in 1:num_nodes
+    for j in 1:num_nodes
+        if A[i, j] == 1
+            push!(edge_pairs, (i, j))
+        end
+    end
+end
+
+# Print the list of edge pairs
+for pair in edge_pairs
+    println(pair)
+end
+
 using ITensors
 using ITensorUnicodePlots
 
@@ -123,7 +156,6 @@ function reduced_rho_matrix(psi)
     
     for i in 1:N
         for j in i:N
-            println("Iter ($i-$j)",i,j)
             density_matrix[i,j] = reduced_rho(psi, i, j);
         end
     end
@@ -138,11 +170,9 @@ function MI(rdm)
     A,B = size(rdm)
     for a in 1:A
         for b in a+1:B
-            @show (a,b)
-            rho_AB = copy(rdm[a,b])
-            inds(rho_AB)
-            delta_AA = delta(dag(inds(full_DM[a,b])[2]), dag(inds(full_DM[a,b])[1]))
-            delta_BB = delta(dag(inds(full_DM[a,b])[4]), dag(inds(full_DM[a,b])[3]))
+            rho_AB = copy(full_DM[a,b])
+            delta_AA = delta(dag(inds(rho_AB)[2]), dag(inds(rho_AB)[1]))
+            delta_BB = delta(dag(inds(rho_AB)[4]), dag(inds(rho_AB)[3]))
             rho_B = delta_AA*rho_AB
             rho_A = delta_BB*rho_AB
             
@@ -165,53 +195,60 @@ Ny = 3;
 N = Nx * Ny;
 
 sites = siteinds("S=1/2", N; conserve_qns = true);
+
 lattice = square_lattice(Nx, Ny; yperiodic=false);
 
 heisenberg_2D_sumOp = OpSum();
 
-for b in lattice
-    heisenberg_2D_sumOp +=       "Sz", b.s1, "Sz", b.s2
-    heisenberg_2D_sumOp += 1/2,  "S+", b.s1, "S-", b.s2
-    heisenberg_2D_sumOp += 1/2,  "S-", b.s1, "S+", b.s2
+for pair in edge_pairs
+    heisenberg_2D_sumOp +=       "Sz", pair[1], "Sz", pair[2]
+    heisenberg_2D_sumOp += 1/2,  "S+", pair[1], "S-", pair[2]
+    heisenberg_2D_sumOp += 1/2,  "S-", pair[1], "S+", pair[2]
 end
-
+@show heisenberg_2D_sumOp;
 #MPO of the 2D Heisenberg Hamiltonian
+
 heisenberg_2D_H = MPO(heisenberg_2D_sumOp, sites);
-@show heisenberg_2D_H[1]
 
 #Initial configuration of the sites of the system
 #initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
 
 
-initial_state = [isodd(n) ? "Dn" : "Up" for n=1:N]
+initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
 #initial_state = ["Up" for n=1:N]
 
 psi_init_8 = randomMPS(sites, initial_state, 2);
 psi_init_20 = randomMPS(sites, initial_state, 20);
 
-nsweeps = 10;
-maxdim_single = [8];
+nsweeps = 5;
+maxdim_single = [8,8,8,8,8,8,8,8,8,8];
 maxdim_full = [20,60,100,200,400,800];
-cutoff = [1E-10];
+cutoff = [1E-8];
 
 energy_8, psi_8 = dmrg(heisenberg_2D_H, psi_init_8; nsweeps, maxdim_single, cutoff);
 energy_dmrg, psi_dmrg = dmrg(heisenberg_2D_H, psi_init_20; nsweeps, maxdim_full, cutoff);
 
-if maxlinkdim(psi_dmrg) > 8
-    truncate!(psi_dmrg,maxdim = 8)
+if maxlinkdim(psi_8) > 8
+    truncate!(psi_8,maxdim = 8)
 end
 
 @show energy_8
 @show energy_dmrg
+@show inner(psi_8', heisenberg_2D_H, psi_8)
 
 
 full_DM = reduced_rho_matrix(psi_8);
 
 I_matrix = MI(full_DM);
-@show inds(full_DM[1,3]);
 
 @show I_matrix
 
 using PlotlyJS
 
-plot(heatmap(z=I_matrix, colorscale = "Viridis"))
+
+
+savefig(plot(heatmap(z=I_matrix, colorscale = "Viridis")), "heiseber3x3_snake.png")
+
+maxC = findmax(I_matrix)
+I_matrixN = I_matrix ./ maxC[1]
+savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "heiseber3x3_snake_norm.png")
