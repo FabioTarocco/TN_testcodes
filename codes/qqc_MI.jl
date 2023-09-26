@@ -64,7 +64,7 @@ function MI_matrix(rdm)
 
         rho_B = delta_AA*rho_AB;
         rho_A = delta_BB*rho_AB;
-
+        
         S_AB = -tr(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),16,16) 
                 * log(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),16,16)));
         S_A = -tr(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2]) * log(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2])));
