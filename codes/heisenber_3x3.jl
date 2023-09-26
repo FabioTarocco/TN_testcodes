@@ -124,7 +124,7 @@ function reduced_rho_matrix(psi)
     for i in 1:N
         for j in i:N
             println("Iter ($i-$j)",i,j)
-            density_matrix[i,j] = reduced_rho(psi_8, i, j);
+            density_matrix[i,j] = reduced_rho(psi, i, j);
         end
     end
     return density_matrix
@@ -139,7 +139,7 @@ function MI(rdm)
     for a in 1:A
         for b in a+1:B
             @show (a,b)
-            rho_AB = copy(full_DM[a,b])
+            rho_AB = copy(rdm[a,b])
             inds(rho_AB)
             delta_AA = delta(dag(inds(full_DM[a,b])[2]), dag(inds(full_DM[a,b])[1]))
             delta_BB = delta(dag(inds(full_DM[a,b])[4]), dag(inds(full_DM[a,b])[3]))
@@ -208,6 +208,7 @@ end
 full_DM = reduced_rho_matrix(psi_8);
 
 I_matrix = MI(full_DM);
+@show inds(full_DM[1,3]);
 
 @show I_matrix
 

@@ -9,7 +9,7 @@ basis = "sto-3g"
 @show basis
 
 println("\nRunning Hartree-Fock")
-hf = @time molecular_orbital_hamiltonian(molecule_h2o; basis)
+hf = @time molecular_orbital_hamiltonian(molecule_h2o; basis, sitetype="Electron")
 hamiltonian = hf.hamiltonian
 hf_state = hf.hartree_fock_state
 hf_energy = hf.hartree_fock_energy
@@ -187,15 +187,16 @@ Hq = MPO(hamiltonian, qubit_hilbert)
 ψ₀q = MPS(qubit_hilbert, hartree_fock_state)
 inner(ψ₀q', Hq, ψ₀q) ≈ electronE
 
-sweeps = Sweeps(10)
-setmaxdim!(sweeps, 100, 200)
-setcutoff!(sweeps, 1e-10)
-setnoise!(sweeps, 1e-6, 1e-7, 1e-8, 0.0)
+nsweeps = 10;
+maxdim = [20,60,100,200,400,800];
+cutoff = [1E-10];
+Ee, psi_e = dmrg(He, ψ₀e; nsweeps, maxdim, cutoff, outputlevel=0)
+Ef, psi_f = dmrg(Hf, ψ₀f; nsweeps, maxdim, cutoff, outputlevel=0)
+Eq, psi_q = dmrg(Hq, ψ₀q; nsweeps, maxdim, cutoff, outputlevel=0)
 
-Ee, _ = dmrg(He, ψ₀e, sweeps; outputlevel=0)
-Ef, _ = dmrg(Hf, ψ₀f, sweeps; outputlevel=0)
-Eq, _ = dmrg(Hq, ψ₀q, sweeps; outputlevel=0)
-
+@show maxlinkdim(psi_e)
+@show maxlinkdim(psi_f)
+@show maxlinkdim(psi_q)
 
 Ee ≈ Ef
 Ee ≈ Eq
