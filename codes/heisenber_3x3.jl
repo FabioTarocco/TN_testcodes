@@ -96,7 +96,7 @@ function reduced_rho(psi,i,j)
     
     return rho
 =#
-
+ 
     #Move the orthogonality center to the i-th site
     orthogonalize!(psi, i)
 
@@ -170,7 +170,7 @@ function MI(rdm)
     A,B = size(rdm)
     for a in 1:A
         for b in a+1:B
-            rho_AB = copy(full_DM[a,b])
+            rho_AB = copy(rdm[a,b])
             delta_AA = delta(dag(inds(rho_AB)[2]), dag(inds(rho_AB)[1]))
             delta_BB = delta(dag(inds(rho_AB)[4]), dag(inds(rho_AB)[3]))
             rho_B = delta_AA*rho_AB
@@ -194,9 +194,10 @@ Nx = 3;
 Ny = 3;
 N = Nx * Ny;
 
-sites = siteinds("S=1/2", N; conserve_qns = true);
+sites = siteinds("S=1/2", N)
 
-lattice = square_lattice(Nx, Ny; yperiodic=false);
+
+dlattice = square_lattice(Nx, Ny; yperiodic=false);
 
 heisenberg_2D_sumOp = OpSum();
 
@@ -205,11 +206,41 @@ for pair in edge_pairs
     heisenberg_2D_sumOp += 1/2,  "S+", pair[1], "S-", pair[2]
     heisenberg_2D_sumOp += 1/2,  "S-", pair[1], "S+", pair[2]
 end
-@show heisenberg_2D_sumOp;
+@show heisenberg_2D_sumOp
 #MPO of the 2D Heisenberg Hamiltonian
 
 heisenberg_2D_H = MPO(heisenberg_2D_sumOp, sites);
+@show heisenberg_2D_H;
+prod_H = prod(heisenberg_2D_H);
+@show inds(prod_H);
+using LinearAlgebra
 
+list_inds_prime = []
+for n in 1:2*N
+    if isodd(n)
+        push!(list_inds_prime, inds(prod_H)[n])
+    end
+end;
+@show list_inds_prime;
+
+list_inds_noprime = []
+for n in 1:2*N
+    if iseven(n)
+        push!(list_inds_noprime, inds(prod_H)[n])
+    end
+end;
+@show list_inds_noprime;
+combiner_prime = combiner(list_inds_prime);
+combiner_noprime = combiner(list_inds_noprime);
+
+@show combiner_prime;
+@show combiner_noprime;
+matrix_H = prime(combiner_prime, "Link")*prod_H*combiner_noprime;
+@show inds(matrix_H);
+@show size(matrix_H);
+
+eig_vec, eig_val = eigen(Array(matrix_H, inds(matrix_H)[1], inds(matrix_H)[2]));
+@show eig_val[1]
 #Initial configuration of the sites of the system
 #initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
 
@@ -217,7 +248,7 @@ heisenberg_2D_H = MPO(heisenberg_2D_sumOp, sites);
 initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
 #initial_state = ["Up" for n=1:N]
 
-psi_init_8 = randomMPS(sites, initial_state, 2);
+psi_init_8 = randomMPS(sites, initial_state, 8);
 psi_init_20 = randomMPS(sites, initial_state, 20);
 
 nsweeps = 5;
