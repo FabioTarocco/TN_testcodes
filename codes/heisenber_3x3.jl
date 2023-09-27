@@ -173,6 +173,7 @@ function MI(rdm)
             rho_AB = copy(rdm[a,b])
             delta_AA = delta(dag(inds(rho_AB)[2]), dag(inds(rho_AB)[1]))
             delta_BB = delta(dag(inds(rho_AB)[4]), dag(inds(rho_AB)[3]))
+            @show rho_AB*delta_AA*delta_BB
             rho_B = delta_AA*rho_AB
             rho_A = delta_BB*rho_AB
             
@@ -276,10 +277,10 @@ I_matrix = MI(full_DM);
 
 using PlotlyJS
 
-
+maxC = findmax(I_matrix)
+I_matrixN = I_matrix ./ maxC[1]
+plot(heatmap(z=I_matrixN, colorscale = "Viridis"))
 
 savefig(plot(heatmap(z=I_matrix, colorscale = "Viridis")), "heiseber3x3_snake.png")
 
-maxC = findmax(I_matrix)
-I_matrixN = I_matrix ./ maxC[1]
 savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "heiseber3x3_snake_norm.png")
