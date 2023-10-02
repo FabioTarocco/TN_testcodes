@@ -301,5 +301,17 @@ savefig(plot(heatmap(z=I_matrix, colorscale = "Viridis")), "heiseber3x3_chi_8.pn
 savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "heiseber3x3_psi_8_full.png")
 
 
-using HDF5
+using ITensors.HDF5
+f = h5open("MPS_GS_8chi_Heisenberg3x3.h5","w")
+write(f,"Psi-DMRG_chi8",psi_8)
+close(f)
+
+using Combinatorics
+V = ITensor(1.)
+for j=1:N
+    V *= (psi_8[j]*state(sites[j],elem[j]))
+  end
+v = scalar(V) # Up is 0, Dn is 1
+psi_8_totalrank = prod(psi_8)
+@show psi_8_totalrank
 
