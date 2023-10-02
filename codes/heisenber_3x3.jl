@@ -191,22 +191,37 @@ end
 
 
 #----------------MAIN------------------
-Nx = 3;
+using ITensors
+Nx =3;
 Ny = 3;
 N = Nx * Ny;
 
-sites = siteinds("S=1/2", N)
+sites = siteinds("S=1/2", N, conserve_qns = false)
+#sites = siteind("Qubit", N, conserve_qns = false)
 
 
 dlattice = square_lattice(Nx, Ny; yperiodic=false);
 
 heisenberg_2D_sumOp = OpSum();
 
+for b in dlattice
+    heisenberg_2D_sumOp +=       "Sz", b.s1, "Sz", b.s2
+    heisenberg_2D_sumOp += 1/2,  "S+", b.s1, "S-", b.s2
+    heisenberg_2D_sumOp += 1/2,  "S-", b.s1, "S+", b.s2
+end
+
 for pair in edge_pairs
     heisenberg_2D_sumOp +=       "Sz", pair[1], "Sz", pair[2]
     heisenberg_2D_sumOp += 1/2,  "S+", pair[1], "S-", pair[2]
     heisenberg_2D_sumOp += 1/2,  "S-", pair[1], "S+", pair[2]
 end
+
+for pair in edge_pairs
+    heisenberg_2D_sumOp +=  "Sz", pair[1], "Sz", pair[2]
+    heisenberg_2D_sumOp +=  "Sx", pair[1], "Sx", pair[2]
+    heisenberg_2D_sumOp +=  "Sy", pair[1], "Sy", pair[2]
+end
+
 @show heisenberg_2D_sumOp
 #MPO of the 2D Heisenberg Hamiltonian
 
@@ -234,53 +249,57 @@ end;
 combiner_prime = combiner(list_inds_prime);
 combiner_noprime = combiner(list_inds_noprime);
 
-@show combiner_prime;
-@show combiner_noprime;
 matrix_H = prime(combiner_prime, "Link")*prod_H*combiner_noprime;
 @show inds(matrix_H);
 @show size(matrix_H);
 
-eig_vec, eig_val = eigen(Array(matrix_H, inds(matrix_H)[1], inds(matrix_H)[2]));
-@show eig_val[1]
+eig_vals, eig_vec = eigen(Array(matrix_H, inds(matrix_H)[1], inds(matrix_H)[2]));
+@show (eig_vals[1])
 #Initial configuration of the sites of the system
 #initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
-
 
 initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
 #initial_state = ["Up" for n=1:N]
 
 psi_init_8 = randomMPS(sites, initial_state, 8);
-psi_init_20 = randomMPS(sites, initial_state, 20);
 
-nsweeps = 5;
-maxdim_single = [8,8,8,8,8,8,8,8,8,8];
-maxdim_full = [20,60,100,200,400,800];
-cutoff = [1E-8];
 
-energy_8, psi_8 = dmrg(heisenberg_2D_H, psi_init_8; nsweeps, maxdim_single, cutoff);
-energy_dmrg, psi_dmrg = dmrg(heisenberg_2D_H, psi_init_20; nsweeps, maxdim_full, cutoff);
+sweeps = Sweeps(10)
+setmaxdim!(sweeps, 8)
+setcutoff!(sweeps, 1e-10)
+setnoise!(sweeps, 1e-6, 1e-7, 1e-8, 0.0)
+energy_8, psi_8 = dmrg(heisenberg_2D_H, psi_init_8, sweeps);
+
 
 if maxlinkdim(psi_8) > 8
-    truncate!(psi_8,maxdim = 8)
+    psi_8_trunc = psi_8
+    truncate!(psi_8_trunc, maxlinkdim=8)
 end
 
-@show energy_8
-@show energy_dmrg
-@show inner(psi_8', heisenberg_2D_H, psi_8)
+@show energy_8 - eig_vals[1]
+@show inner(psi_8_trunc, heisenberg_2D_H, psi_8_trunc) - eig_vals[1]
 
 
+full_DM_trunc = reduced_rho_matrix(psi_8_trunc);
 full_DM = reduced_rho_matrix(psi_8);
 
+I_matrix_trunc = MI(full_DM_trunc);
 I_matrix = MI(full_DM);
 
 @show I_matrix
 
 using PlotlyJS
 
+maxC_trunc = findmax(I_matrix_trunc)
 maxC = findmax(I_matrix)
 I_matrixN = I_matrix ./ maxC[1]
-plot(heatmap(z=I_matrixN, colorscale = "Viridis"))
 
-savefig(plot(heatmap(z=I_matrix, colorscale = "Viridis")), "heiseber3x3_snake.png")
+I_matrixN_trunc = I_matrix_trunc ./ maxC_trunc[1]
 
-savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "heiseber3x3_snake_norm.png")
+savefig(plot(heatmap(z=I_matrix, colorscale = "Viridis")), "heiseber3x3_chi_8.png")
+
+savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "heiseber3x3_psi_8_full.png")
+
+
+using HDF5
+

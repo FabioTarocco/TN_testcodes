@@ -61,7 +61,7 @@ function MI_matrix(rdm)
         rho_AB = copy(rdm[a,b]);
         delta_AA = delta(dag(inds(rho_AB)[1]), dag(inds(rho_AB)[2]));
         delta_BB = delta(dag(inds(rho_AB)[3]), dag(inds(rho_AB)[4]));
-
+        @show delta_AA*rho_AB*delta_BB
         rho_B = delta_AA*rho_AB;
         rho_A = delta_BB*rho_AB;
         
