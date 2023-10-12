@@ -188,12 +188,56 @@ function MI(rdm)
     return I_AB
 end
 
+function MI_diag(rdm)
+    
+    I_AB = zeros(N,N)
+    A,B = size(rdm)
+    for a in 1:A
+        for b in a+1:B
+            rho_AB = copy(rdm[a,b])
+            delta_AA = delta(dag(inds(rho_AB)[2]), dag(inds(rho_AB)[1]))
+            delta_BB = delta(dag(inds(rho_AB)[4]), dag(inds(rho_AB)[3]))
+            @show rho_AB*delta_AA*delta_BB
+            rho_B = delta_AA*rho_AB
+            rho_A = delta_BB*rho_AB
+            
+            D_AB, _ = eigen(rho_AB)
+            S_AB = 0.0
+            for n=1:dim(D_AB, 1)
+                p = D_AB[n,n]
+                S_AB -= p * log(p)
+            end
+
+            D_A, _ = eigen(rho_A)
+            S_A = 0.0
+            for n=1:dim(D_AB, 1)
+                p = D_A[n]
+                S_A -= p * log(p)
+            end
+
+            D_B, _ = eigen(rho_B)
+            S_B = 0.0
+            for n=1:dim(D_B, 1)
+                p = D_B[n]
+                S_B -= p * log(p)
+            end
+            #S_AB = -tr(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),4,4) * log(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),4,4)))
+            #S_A = -tr(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2]) * log(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2])))
+            #S_B = -tr(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2]) * log(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2])))
+            
+            I_AB[a,b] =I_AB[b,a]= S_A + S_B - S_AB
+            
+        end
+    end 
+    return I_AB
+end
+
 
 
 #----------------MAIN------------------
 using ITensors
-Nx =3;
-Ny = 3;
+Nx =4;
+Ny = 4;
 N = Nx * Ny;
 
 sites = siteinds("S=1/2", N, conserve_qns = false)
@@ -265,7 +309,7 @@ psi_init_8 = randomMPS(sites, initial_state, 8);
 
 
 sweeps = Sweeps(10)
-setmaxdim!(sweeps, 8)
+setmaxdim!(sweeps, 8,16,50,100,200,400)
 setcutoff!(sweeps, 1e-10)
 setnoise!(sweeps, 1e-6, 1e-7, 1e-8, 0.0)
 energy_8, psi_8 = dmrg(heisenberg_2D_H, psi_init_8, sweeps);
@@ -281,10 +325,11 @@ end
 
 
 full_DM_trunc = reduced_rho_matrix(psi_8_trunc);
-full_DM = reduced_rho_matrix(psi_8);
+full_DM = reduced_rho_matrix(psi_8)
 
 I_matrix_trunc = MI(full_DM_trunc);
 I_matrix = MI(full_DM);
+I_diag_matrix = MI_diag(full_DM);
 
 @show I_matrix
 
@@ -295,10 +340,11 @@ maxC = findmax(I_matrix)
 I_matrixN = I_matrix ./ maxC[1]
 
 I_matrixN_trunc = I_matrix_trunc ./ maxC_trunc[1]
+plot(heatmap(z=I_matrixN, colorscale = "Viridis"))
 
-savefig(plot(heatmap(z=I_matrix, colorscale = "Viridis")), "heiseber3x3_chi_8.png")
-
-savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "heiseber3x3_psi_8_full.png")
+savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "heiseber4x4_chi_256.png")
+plot(heatmap(z=I_matrixN_trunc, colorscale = "Viridis"))
+savefig(plot(heatmap(z=I_matrixN_trunc, colorscale = "Viridis")), "heiseber4x4_psi_8_trunc.png")
 
 
 using ITensors.HDF5
@@ -315,3 +361,8 @@ v = scalar(V) # Up is 0, Dn is 1
 psi_8_totalrank = prod(psi_8)
 @show psi_8_totalrank
 
+
+13  14  15  16
+9   10  11  12
+5   6   7   8
+1   2   3   4
