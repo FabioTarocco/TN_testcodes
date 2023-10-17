@@ -170,22 +170,21 @@ function MI(rdm)
     A,B = size(rdm)
     for a in 1:A
         for b in a+1:B
-            rho_AB = copy(rdm[a,b])
-            delta_AA = delta(dag(inds(rho_AB)[2]), dag(inds(rho_AB)[1]))
-            delta_BB = delta(dag(inds(rho_AB)[4]), dag(inds(rho_AB)[3]))
-            @show rho_AB*delta_AA*delta_BB
-            rho_B = delta_AA*rho_AB
-            rho_A = delta_BB*rho_AB
-            
-            S_AB = -tr(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),4,4) * log(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),4,4)))
-            S_A = -tr(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2]) * log(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2])))
-            S_B = -tr(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2]) * log(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2])))
-            
-            I_AB[a,b] =I_AB[b,a]= S_A + S_B - S_AB
+            rho_AB = copy(rdm[a,b]);
+            @show (a,b);
+            delta_AA = delta(dag(inds(rho_AB)[2]), dag(inds(rho_AB)[1]));
+            delta_BB = delta(dag(inds(rho_AB)[4]), dag(inds(rho_AB)[3]));
+            rho_B = delta_AA*rho_AB;
+            rho_A = delta_BB*rho_AB;
+            S_AB = -tr(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),4,4) * log(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),4,4)));
+            S_A = -tr(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2]) * log(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2])));
+            S_B = -tr(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2]) * log(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2])));
+            @show S_A, S_B, S_AB, (a,b)
+            I_AB[a,b] = I_AB[b,a]= S_A + S_B - S_AB;
             
         end
     end 
-    return I_AB
+    return I_AB;
 end
 
 function MI_diag(rdm)
@@ -194,15 +193,21 @@ function MI_diag(rdm)
     A,B = size(rdm)
     for a in 1:A
         for b in a+1:B
-            rho_AB = copy(rdm[a,b])
-            delta_AA = delta(dag(inds(rho_AB)[2]), dag(inds(rho_AB)[1]))
-            delta_BB = delta(dag(inds(rho_AB)[4]), dag(inds(rho_AB)[3]))
-            @show rho_AB*delta_AA*delta_BB
-            rho_B = delta_AA*rho_AB
-            rho_A = delta_BB*rho_AB
-            
-            D_AB, _ = eigen(rho_AB)
-            S_AB = 0.0
+            rho_AB = copy(rdm[a,b]);
+
+            L_inds = (dag(inds(rho_AB)[1]), dag(inds(rho_AB)[3]));
+            R_inds = (dag(inds(rho_AB)[2]), dag(inds(rho_AB)[4]));
+            delta_AA = delta(dag(inds(rho_AB)[2]), dag(inds(rho_AB)[1]));
+            delta_BB = delta(dag(inds(rho_AB)[4]), dag(inds(rho_AB)[3]));
+
+            rho_B = delta_AA*rho_AB;
+
+            rho_A = delta_BB*rho_AB;
+
+
+            D_AB, _ = eigen(rho_AB, L_inds, R_inds);
+
+            S_AB = 0.0;
             for n=1:dim(D_AB, 1)
                 p = D_AB[n,n]
                 S_AB -= p * log(p)
@@ -210,21 +215,34 @@ function MI_diag(rdm)
 
             D_A, _ = eigen(rho_A)
             S_A = 0.0
-            for n=1:dim(D_AB, 1)
-                p = D_A[n]
+            for n=1:dim(D_A, 1)
+                p = D_A[n,n]
                 S_A -= p * log(p)
             end
 
             D_B, _ = eigen(rho_B)
             S_B = 0.0
             for n=1:dim(D_B, 1)
-                p = D_B[n]
+                p = D_B[n,n]
                 S_B -= p * log(p)
             end
+
+            println("--------------------------\nRDM\n----------------------")
+            @show rho_AB;
+            @show rho_A;
+            @show rho_B;
+            println("---------------------\nCheck norm\n------------------------")
+            @show rho_AB*delta_AA*delta_BB;
+            println("-----------------------\nEigval\n-----------------------")
+            @show D_AB;
+            @show D_A;
+            @show D_B;
+
             #S_AB = -tr(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),4,4) * log(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),4,4)))
             #S_A = -tr(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2]) * log(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2])))
             #S_B = -tr(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2]) * log(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2])))
-            
+            @show S_A, S_B, S_AB, (a,b);
+
             I_AB[a,b] =I_AB[b,a]= S_A + S_B - S_AB
             
         end
@@ -240,74 +258,85 @@ Nx =3;
 Ny = 3;
 N = Nx * Ny;
 
+mps_mode = 0 #0=std mps, 1=snake
+lattice_type = 0 # 0=open boundary, 1=periodic on Y
+heisenberg_mode = 0 #0=ZZXXYY, 1=+--+ZZ
+diag = false
+
 sites = siteinds("S=1/2", N, conserve_qns = false)
 #sites = siteind("Qubit", N, conserve_qns = false)
 
-
-dlattice = square_lattice(Nx, Ny; yperiodic=true)
-for bond in dlattice
-    @show bond
+if lattice_type == 0
+    dlattice = square_lattice(Nx, Ny; yperiodic=false)
+elseif lattice_type == 1
+    dlattice = square_lattice(Nx, Ny; yperiodic=true)
 end
+
+
 heisenberg_2D_sumOp = OpSum();
+if mps_mode == 1
+    if heisenberg_mode == 0 
 
-for b in dlattice
-    heisenberg_2D_sumOp +=       "Sz", b.s1, "Sz", b.s2
-    heisenberg_2D_sumOp += 1/2,  "S+", b.s1, "S-", b.s2
-    heisenberg_2D_sumOp += 1/2,  "S-", b.s1, "S+", b.s2
+        for pair in edge_pairs
+            heisenberg_2D_sumOp +=  "Sz", pair[1], "Sz", pair[2]
+            heisenberg_2D_sumOp +=  "Sx", pair[1], "Sx", pair[2]
+            heisenberg_2D_sumOp +=  "Sy", pair[1], "Sy", pair[2]
+        end
+    elseif heisenberg_mode == 1
+        for pair in edge_pairs
+            heisenberg_2D_sumOp +=       "Sz", pair[1], "Sz", pair[2]
+            heisenberg_2D_sumOp += 1/2,  "S+", pair[1], "S-", pair[2]
+            heisenberg_2D_sumOp += 1/2,  "S-", pair[1], "S+", pair[2]
+        end
+    end
+elseif mps_mode == 0
+    for b in dlattice
+        heisenberg_2D_sumOp +=       "Sz", b.s1, "Sz", b.s2
+        heisenberg_2D_sumOp += 1/2,  "S+", b.s1, "S-", b.s2
+        heisenberg_2D_sumOp += 1/2,  "S-", b.s1, "S+", b.s2
+    end
 end
-
-for pair in edge_pairs
-    heisenberg_2D_sumOp +=       "Sz", pair[1], "Sz", pair[2]
-    heisenberg_2D_sumOp += 1/2,  "S+", pair[1], "S-", pair[2]
-    heisenberg_2D_sumOp += 1/2,  "S-", pair[1], "S+", pair[2]
-end
-
-for pair in edge_pairs
-    heisenberg_2D_sumOp +=  "Sz", pair[1], "Sz", pair[2]
-    heisenberg_2D_sumOp +=  "Sx", pair[1], "Sx", pair[2]
-    heisenberg_2D_sumOp +=  "Sy", pair[1], "Sy", pair[2]
-end
-
-@show heisenberg_2D_sumOp
 #MPO of the 2D Heisenberg Hamiltonian
 
 heisenberg_2D_H = MPO(heisenberg_2D_sumOp, sites);
 @show heisenberg_2D_H;
-prod_H = prod(heisenberg_2D_H);
-@show inds(prod_H);
-using LinearAlgebra
+@show heisenberg_2D_sumOp
 
-list_inds_prime = []
-for n in 1:2*N
-    if isodd(n)
-        push!(list_inds_prime, inds(prod_H)[n])
-    end
-end;
-@show list_inds_prime;
+if diag == true
+    using LinearAlgebra
+    prod_H = prod(heisenberg_2D_H);
+    @show inds(prod_H);
 
-list_inds_noprime = []
-for n in 1:2*N
-    if iseven(n)
-        push!(list_inds_noprime, inds(prod_H)[n])
-    end
-end;
-@show list_inds_noprime;
-combiner_prime = combiner(list_inds_prime);
-combiner_noprime = combiner(list_inds_noprime);
+    list_inds_prime = []
+    for n in 1:2*N
+        if isodd(n)
+            push!(list_inds_prime, inds(prod_H)[n])
+        end
+    end;
+    @show list_inds_prime;
 
-matrix_H = prime(combiner_prime, "Link")*prod_H*combiner_noprime;
-@show inds(matrix_H);
-@show size(matrix_H);
+    list_inds_noprime = []
+    for n in 1:2*N
+        if iseven(n)
+            push!(list_inds_noprime, inds(prod_H)[n])
+        end
+    end;
+    @show list_inds_noprime;
+    combiner_prime = combiner(list_inds_prime);
+    combiner_noprime = combiner(list_inds_noprime);
 
-eig_vals, eig_vec = eigen(Array(matrix_H, inds(matrix_H)[1], inds(matrix_H)[2]));
-@show (eig_vals[1])
-#Initial configuration of the sites of the system
-#initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
+    matrix_H = prime(combiner_prime, "Link")*prod_H*combiner_noprime;
+    @show inds(matrix_H);
+    @show size(matrix_H);
+
+    eig_vals, eig_vec = eigen(matrix_H, inds(matrix_H)[1], inds(matrix_H)[2]);
+    @show (eig_vals[1])
+    #Initial configuration of the sites of the system
+    #initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
+end
 
 initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
-#initial_state = ["Up" for n=1:N]
-
-psi_init_8 = randomMPS(sites, initial_state, 8);
+psi_init_8 = randomMPS(sites, initial_state);
 
 
 sweeps = Sweeps(10)
@@ -332,6 +361,8 @@ full_DM = reduced_rho_matrix(psi_8)
 I_matrix_trunc = MI(full_DM_trunc);
 I_matrix = MI(full_DM);
 I_diag_matrix = MI_diag(full_DM);
+I_diag_matrix = I_diag_matrix ./ findmax(I_diag_matrix)[1];
+plot(heatmap(z=I_diag_matrix, colorscale = "Viridis"))
 
 @show I_matrix
 
@@ -344,9 +375,9 @@ I_matrixN = I_matrix ./ maxC[1]
 I_matrixN_trunc = I_matrix_trunc ./ maxC_trunc[1]
 plot(heatmap(z=I_matrixN, colorscale = "Viridis"))
 
-savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "heiseber5x5_chi_1567.png")
+savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "heiseberg5x5_chi_1567.png")
 plot(heatmap(z=I_matrixN_trunc, colorscale = "Viridis"))
-savefig(plot(heatmap(z=I_matrixN_trunc, colorscale = "Viridis")), "heiseber4x4_psi_8_trunc.png")
+savefig(plot(heatmap(z=I_matrixN_trunc, colorscale = "Viridis")), "heiseberg4x4_psi_8_trunc.png")
 
 
 using ITensors.HDF5
@@ -362,9 +393,3 @@ for j=1:N
 v = scalar(V) # Up is 0, Dn is 1
 psi_8_totalrank = prod(psi_8)
 @show psi_8_totalrank
-
-
-13  14  15  16
-9   10  11  12
-5   6   7   8
-1   2   3   4
