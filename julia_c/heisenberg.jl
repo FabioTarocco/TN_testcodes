@@ -254,7 +254,7 @@ end
 
 #----------------MAIN------------------
 using ITensors
-Nx = 4;
+Nx = 3;
 Ny = 3;
 N = Nx * Ny;
 
@@ -290,10 +290,19 @@ if mps_mode == 1
         end
     end
 elseif mps_mode == 0
-    for b in dlattice
-        heisenberg_2D_sumOp +=       "Sz", b.s1, "Sz", b.s2
-        heisenberg_2D_sumOp += 1/2,  "S+", b.s1, "S-", b.s2
-        heisenberg_2D_sumOp += 1/2,  "S-", b.s1, "S+", b.s2
+
+    if heisenberg_mode == 0 
+        for b in dlattice
+            heisenberg_2D_sumOp +=  "Sz", b.s1, "Sz", b.s2
+            heisenberg_2D_sumOp +=  "Sx", b.s1, "Sx", b.s2
+            heisenberg_2D_sumOp +=  "Sy", b.s1, "Sy", b.s2
+        end
+    elseif heisenberg_mode == 1
+        for b in dlattice
+            heisenberg_2D_sumOp +=       "Sz", b.s1, "Sz", b.s2
+            heisenberg_2D_sumOp += 1/2,  "S+", b.s1, "S-", b.s2
+            heisenberg_2D_sumOp += 1/2,  "S-", b.s1, "S+", b.s2
+        end
     end
 end
 #MPO of the 2D Heisenberg Hamiltonian
