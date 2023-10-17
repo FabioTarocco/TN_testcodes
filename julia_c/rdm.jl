@@ -51,28 +51,28 @@ function reduced_rho(psi,i,j)
     =#
      
         #Move the orthogonality center to the i-th site
-        orthogonalize!(psi, i)
+        orthogonalize!(psi, i);
     
         #create the psi^dag
-        psi_dag = dag(psi)
+        psi_dag = dag(psi);
         
         if i==j
-            rho = prime(psi_dag[i], "Site") * psi[i]
-            @assert 2 == length(inds(rho))
-            return rho
+            rho = prime(psi_dag[i], "Site") * psi[i];
+            @assert 2 == length(inds(rho));
+            return rho;
         end
     
         #prime all the virtual index of psi^dag
-        prime!(psi_dag, "Link")
+        prime!(psi_dag, "Link");
     
         #if i is the first site, then we just need to compute the product state of the first site of psi^dag and psi
         if i == 1
             #prime the physical index of psi[i]^dag, otherwise it will be contracted with the physical index of psi[i]
-            rho = prime(psi_dag[i],"Site")
+            rho = prime(psi_dag[i],"Site");
             #add the site i to rho
-            rho *= psi[i]
+            rho *= psi[i];
         else #if i is not 1, then we need to get link_i-1
-            link_i_1 = commonind(psi[i],psi[i-1])
+            link_i_1 = commonind(psi[i],psi[i-1]);
             #add to rho the i-th site of psi^dag and prime the physical index
             rho = prime(psi_dag[i],"Site");
             #add the i-th site of psi by priming link_i-1
@@ -80,33 +80,38 @@ function reduced_rho(psi,i,j)
         end
         #add to rho all the intermediate sites of psi and psi^dag between site i and j
         for k in i+1:j-1
-            rho *= psi_dag[k]
-            rho *= psi[k]
+            rho *= psi_dag[k];
+            rho *= psi[k];
         end
     
         #if j is equals to N (last mps site) then we just need to add psi[j]^dag priming the physical index and psi[j]
         if j == size(psi)[1]
-            rho *= prime(psi_dag[j], "Site")
-            rho *= psi[j]
+            rho *= prime(psi_dag[j], "Site");
+            rho *= psi[j];
         else
             #if j is not the last site, we need to get the link index between the j-th site and the j+1-th site
-            link_j = commonind(psi[j], psi[j+1])
+            println("-----------------\nDEGUB\n------------------------");
+            @show (j,j+1);
+            @show (inds(psi[j]), inds(psi[j+1]));
+            link_j = commonind(psi[j], psi[j+1]);
             #add to rho the j-th site of psi^dag priming the physical index and then add the j-th site of psi
-            rho *= prime(psi_dag[j], "Site")
-            rho *= prime(psi[j], link_j)
+            rho *= prime(psi_dag[j], "Site");
+            rho *= prime(psi[j], link_j);
         end
     
-        @assert 4 == length(inds(rho))
-        return rho
+        @assert 4 == length(inds(rho));
+        return rho;
     end
 
 
 
 function reduced_rho_matrix(psi)
-    density_matrix = Array{Any}(undef, N,N)
+    el = size(psi)[1]
+    density_matrix = Array{Any}(undef, el,el)
+    @show size(density_matrix)
     
-    for i in 1:N
-        for j in i:N
+    for i in 1:el
+        for j in i:el
             density_matrix[i,j] = reduced_rho(psi, i, j);
         end
     end

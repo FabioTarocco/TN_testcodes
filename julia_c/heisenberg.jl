@@ -180,7 +180,7 @@ function MI(rdm)
             S_A = -tr(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2]) * log(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2])));
             S_B = -tr(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2]) * log(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2])));
             @show S_A, S_B, S_AB, (a,b)
-            I_AB[a,b] = I_AB[b,a]= S_A + S_B - S_AB;
+            I_AB[a,b] = I_AB[b,a] = S_A + S_B - S_AB;
             
         end
     end 
@@ -254,7 +254,7 @@ end
 
 #----------------MAIN------------------
 using ITensors
-Nx =3;
+Nx = 4;
 Ny = 3;
 N = Nx * Ny;
 
@@ -343,53 +343,82 @@ sweeps = Sweeps(10)
 setmaxdim!(sweeps, 8,16,50,100,200,400,1000,2000)
 setcutoff!(sweeps, 1e-10)
 setnoise!(sweeps, 1e-6, 1e-7, 1e-8, 0.0)
-energy_8, psi_8 = dmrg(heisenberg_2D_H, psi_init_8, sweeps);
+energy_DMRG, psi_DMRG = dmrg(heisenberg_2D_H, psi_init_8, sweeps);
 
 
-if maxlinkdim(psi_8) > 8
-    psi_8_trunc = psi_8
-    truncate!(psi_8_trunc, maxlinkdim=8)
+if maxlinkdim(psi_DMRG) > 8
+    psi_DMRG_trunc = psi_DMRG
+    truncate!(psi_DMRG_trunc, maxlinkdim=8)
 end
 
-@show energy_8 - eig_vals[1]
-@show inner(psi_8_trunc, heisenberg_2D_H, psi_8_trunc) - eig_vals[1]
+@show energy_DMRG - eig_vals[1]
+@show inner(psi_DMRG_trunc, heisenberg_2D_H, psi_DMRG_trunc) - eig_vals[1]
 
 
-full_DM_trunc = reduced_rho_matrix(psi_8_trunc);
-full_DM = reduced_rho_matrix(psi_8)
 
+using PlotlyJS
+
+full_DM_trunc = reduced_rho_matrix(psi_DMRG_trunc);
 I_matrix_trunc = MI(full_DM_trunc);
+maxC_trunc = findmax(I_matrix_trunc);
+I_matrixN_trunc = I_matrix_trunc ./ maxC_trunc[1];
+
+plot(heatmap(z=I_matrixN_trunc, colorscale = "Viridis"))
+path_T= string("heisenberg%dx%d_truncaded_chi_%d.png",Nx,Ny,maxlinkdim(psi_DMRG))
+savefig(plot(heatmap(z=I_matrixN_trunc, colorscale = "Viridis")), path_T)
+
+full_DM = reduced_rho_matrix(psi_DMRG);
 I_matrix = MI(full_DM);
+maxC = findmax(I_matrix);
+I_matrixN = I_matrix ./ maxC[1];
+
+plot(heatmap(z=I_matrixN, colorscale = "Viridis"))
+bond_dim = maxlinkdim(psi_DMRG);
+path_N= string("heisenberg$(Nx)x$(Ny)_chi_$(bond_dim).png");
+savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), path_N)
+
+
 I_diag_matrix = MI_diag(full_DM);
 I_diag_matrix = I_diag_matrix ./ findmax(I_diag_matrix)[1];
 plot(heatmap(z=I_diag_matrix, colorscale = "Viridis"))
 
-@show I_matrix
 
-using PlotlyJS
+include("mutual_info.jl")
 
-maxC_trunc = findmax(I_matrix_trunc)
-maxC = findmax(I_matrix)
-I_matrixN = I_matrix ./ maxC[1]
 
-I_matrixN_trunc = I_matrix_trunc ./ maxC_trunc[1]
-plot(heatmap(z=I_matrixN, colorscale = "Viridis"))
+mi_plot = plot_MI_coupling(I_matrixN, size(I_matrixN)[1])
 
-savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "heiseberg5x5_chi_1567.png")
-plot(heatmap(z=I_matrixN_trunc, colorscale = "Viridis"))
-savefig(plot(heatmap(z=I_matrixN_trunc, colorscale = "Viridis")), "heiseberg4x4_psi_8_trunc.png")
+@show mi_plot
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 using ITensors.HDF5
 f = h5open("MPS_GS_8chi_Heisenberg3x3.h5","w")
-write(f,"Psi-DMRG_chi8",psi_8)
+write(f,"Psi-DMRG_chi8",psi_DMRG)
 close(f)
 
 using Combinatorics
 V = ITensor(1.)
 for j=1:N
-    V *= (psi_8[j]*state(sites[j],elem[j]))
+    V *= (psi_DMRG[j]*state(sites[j],elem[j]))
   end
 v = scalar(V) # Up is 0, Dn is 1
-psi_8_totalrank = prod(psi_8)
-@show psi_8_totalrank
+psi_DMRG_totalrank = prod(psi_DMRG)
+@show psi_DMRG_totalrank
+
+
