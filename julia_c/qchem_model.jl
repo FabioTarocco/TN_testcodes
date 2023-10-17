@@ -49,7 +49,7 @@ end
 
 
 
-ham , H_mpo, psi_hf, hf_energy = settings_TN("H₂O", "sto-3g", "Electron");
+ham , H_mpo, psi_hf, hf_energy = settings_TN("H₂O", "sto-3g", "Fermion");
 println("-----------------------\nTensor network settings\n-----------------------");
 @show ham;
 @show H_mpo;
@@ -66,4 +66,9 @@ dmrg_en, dmrg_psi = dmrg(H_mpo, psi_hf; nsweeps, maxdim, cutoff);
 
 full_DM = reduced_rho_matrix(dmrg_psi);
 I_matrix = MI_diag(full_DM);
+maxC = findmax(I_matrix);
+I_matrixN = I_matrix ./ maxC[1];
 
+
+using PlotlyJS
+plot(heatmap(z=I_matrixN, colorscale = "Viridis"))

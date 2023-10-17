@@ -390,6 +390,12 @@ mi_plot = plot_MI_coupling(I_matrixN, size(I_matrixN)[1])
 
 @show mi_plot
 
+mi_plot
+p = plot()
+i = 0
+for k ∈ keys(mi_plot)
+    scatter!(p, mi_plot[k],i)
+end
 
 
 
@@ -403,10 +409,7 @@ mi_plot = plot_MI_coupling(I_matrixN, size(I_matrixN)[1])
 
 
 
-
-
-
-
+s
 using ITensors.HDF5
 f = h5open("MPS_GS_8chi_Heisenberg3x3.h5","w")
 write(f,"Psi-DMRG_chi8",psi_DMRG)
