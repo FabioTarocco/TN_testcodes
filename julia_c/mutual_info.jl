@@ -126,3 +126,4 @@ function plot_MI_coupling(I,n)
     println("Sorted values: ", mi_dict);
     return mi_dict;
 end
+

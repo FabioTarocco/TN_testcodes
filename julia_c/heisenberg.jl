@@ -40,14 +40,11 @@ for pair in edge_pairs
     println(pair)
 end
 
-using ITensors
-using ITensorUnicodePlots
-
-
+#=
 #---------Reduced density matrix -------------------
 
 function reduced_rho(psi,i,j)
-#=
+
     #Move the orthogonality center on the i-th site
     orthogonalize!(psi, i)
 
@@ -95,7 +92,7 @@ function reduced_rho(psi,i,j)
     end
     
     return rho
-=#
+
  
     #Move the orthogonality center to the i-th site
     orthogonalize!(psi, i)
@@ -187,6 +184,7 @@ function MI(rdm)
     return I_AB;
 end
 
+
 function MI_diag(rdm)
     
     I_AB = zeros(N,N)
@@ -248,12 +246,17 @@ function MI_diag(rdm)
         end
     end 
     return I_AB
-end
+end=#
 
 
 
 #----------------MAIN------------------
 using ITensors
+using PlotlyJS
+
+include("mutual_info.jl")
+include("rdm.jl")
+
 Nx = 3;
 Ny = 3;
 N = Nx * Ny;
@@ -364,9 +367,6 @@ end
 @show inner(psi_DMRG_trunc, heisenberg_2D_H, psi_DMRG_trunc) - eig_vals[1]
 
 
-
-using PlotlyJS
-
 full_DM_trunc = reduced_rho_matrix(psi_DMRG_trunc);
 I_matrix_trunc = MI(full_DM_trunc);
 maxC_trunc = findmax(I_matrix_trunc);
@@ -392,7 +392,6 @@ I_diag_matrix = I_diag_matrix ./ findmax(I_diag_matrix)[1];
 plot(heatmap(z=I_diag_matrix, colorscale = "Viridis"))
 
 
-include("mutual_info.jl")
 
 
 mi_plot = plot_MI_coupling(I_matrixN, size(I_matrixN)[1])
