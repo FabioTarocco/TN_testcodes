@@ -67,7 +67,7 @@ function MI_diag(rdm, d::Int64=2)
             S_A = 0.0
             for n=1:dim(D_A, 1)
                 p = D_A[n,n]
-                if p == 0
+                if p == 0.0
                     nothing
                 else
                     S_A -= p * log(p)
@@ -78,7 +78,7 @@ function MI_diag(rdm, d::Int64=2)
             S_B = 0.0
             for n=1:dim(D_B, 1)
                 p = D_B[n,n]
-                if p == 0
+                if p == 0.0
                     nothing
                 else
                     S_B -= p * log(p)

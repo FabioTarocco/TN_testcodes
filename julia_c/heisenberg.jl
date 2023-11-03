@@ -258,13 +258,13 @@ include("mutual_info.jl")
 include("rdm.jl")
 
 Nx = 3;
-Ny = 3;
+Ny = 4;
 N = Nx * Ny;
 
 mps_mode = 0 #0=std mps, 1=snake
 lattice_type = 0 # 0=open boundary, 1=periodic on Y
 heisenberg_mode = 0 #0=ZZXXYY, 1=+--+ZZ
-diag = false
+diag = true
 
 sites = siteinds("S=1/2", N, conserve_qns = false)
 #sites = siteind("Qubit", N, conserve_qns = false)
@@ -273,6 +273,10 @@ if lattice_type == 0
     dlattice = square_lattice(Nx, Ny; yperiodic=false)
 elseif lattice_type == 1
     dlattice = square_lattice(Nx, Ny; yperiodic=true)
+end
+
+for b in dlattice
+    println(b)
 end
 
 
@@ -346,6 +350,7 @@ if diag == true
     #Initial configuration of the sites of the system
     #initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
 end
+@show real(eig_vals[1])
 
 initial_state = [isodd(n) ? "Up" : "Dn" for n=1:N]
 psi_init_8 = randomMPS(sites, initial_state);
@@ -356,7 +361,7 @@ setmaxdim!(sweeps, 8,16,50,100,200,400,1000,2000)
 setcutoff!(sweeps, 1e-10)
 setnoise!(sweeps, 1e-6, 1e-7, 1e-8, 0.0)
 energy_DMRG, psi_DMRG = dmrg(heisenberg_2D_H, psi_init_8, sweeps);
-
+@show energy_
 
 if maxlinkdim(psi_DMRG) > 8
     psi_DMRG_trunc = psi_DMRG
@@ -377,7 +382,7 @@ path_T= string("heisenberg%dx%d_truncaded_chi_%d.png",Nx,Ny,maxlinkdim(psi_DMRG)
 savefig(plot(heatmap(z=I_matrixN_trunc, colorscale = "Viridis")), path_T)
 
 full_DM = reduced_rho_matrix(psi_DMRG);
-I_matrix = MI(full_DM);
+I_matrix = MI_diag(full_DM);
 maxC = findmax(I_matrix);
 I_matrixN = I_matrix ./ maxC[1];
 
@@ -411,13 +416,6 @@ end
 
 
 
-
-
-
-
-
-
-s
 using ITensors.HDF5
 f = h5open("MPS_GS_8chi_Heisenberg3x3.h5","w")
 write(f,"Psi-DMRG_chi8",psi_DMRG)

@@ -49,7 +49,7 @@ function reduced_rho(psi,i,j)
         
         return rho
     =#
-     
+        rho = 0.0
         #Move the orthogonality center to the i-th site
         orthogonalize!(psi, i);
     

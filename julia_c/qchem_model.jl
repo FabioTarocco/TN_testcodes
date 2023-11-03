@@ -12,6 +12,7 @@ function settings_TN(molecule, basis, type)
     type = {"Electron", "Qubit", "Fermion"}
     molecule = {"H₂",
                 "N₂",
+                "NH₃",
                 "H₂O",
                 "BeH₂",
                 "ammonia",
@@ -49,7 +50,7 @@ end
 
 
 
-ham , H_mpo, psi_hf, hf_energy = settings_TN("H₂O", "sto-3g", "Fermion");
+ham , H_mpo, psi_hf, hf_energy = settings_TN("NH₃", "sto-3g", "Fermion");
 println("-----------------------\nTensor network settings\n-----------------------");
 @show ham;
 @show H_mpo;
@@ -57,11 +58,13 @@ println("-----------------------\nTensor network settings\n---------------------
 @show size(psi_hf);
 @show hf_energy;
 
-nsweeps = 10;
-maxdim = [20,60,100,200,400,800];
-cutoff = [1E-6];
 
-dmrg_en, dmrg_psi = dmrg(H_mpo, psi_hf; nsweeps, maxdim, cutoff);
+sweeps = Sweeps(10)
+setmaxdim!(sweeps, 8,16,50,100,200,400,1000,2000)
+setcutoff!(sweeps, 1e-10)
+setnoise!(sweeps, 1e-6, 1e-7, 1e-8, 0.0)
+
+dmrg_en, dmrg_psi = dmrg(H_mpo, psi_hf, sweeps);
 @show maxlinkdim(dmrg_psi);
 
 full_DM = reduced_rho_matrix(dmrg_psi);
@@ -69,6 +72,8 @@ I_matrix = MI_diag(full_DM);
 maxC = findmax(I_matrix);
 I_matrixN = I_matrix ./ maxC[1];
 
-
 using PlotlyJS
 plot(heatmap(z=I_matrixN, colorscale = "Viridis"))
+savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "./NH3_sto-3g_fermio
+.png")
+dmrg_en
