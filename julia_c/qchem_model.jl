@@ -50,7 +50,7 @@ end
 
 
 
-ham , H_mpo, psi_hf, hf_energy = settings_TN("NH₃", "sto-3g", "Fermion");
+ham , H_mpo, psi_hf, hf_energy = settings_TN("LiH", "sto-3g", "Fermion");
 println("-----------------------\nTensor network settings\n-----------------------");
 @show ham;
 @show H_mpo;
@@ -74,6 +74,10 @@ I_matrixN = I_matrix ./ maxC[1];
 
 using PlotlyJS
 plot(heatmap(z=I_matrixN, colorscale = "Viridis"))
-savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "./NH3_sto-3g_fermio
-.png")
+savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "./NH3_sto-3g_fermio.png")
 dmrg_en
+
+
+s =reorder_MI(I_matrixN)
+
+plot(heatmap(z=s, colorscale = "Viridis"))

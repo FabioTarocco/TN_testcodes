@@ -111,6 +111,34 @@ function MI_diag(rdm, d::Int64=2)
     return I_AB
 end
 
+function reorder_MI(MI_map)
+    a, b = size(MI_map)
+    ordered_MI = zeros(size(MI_map))
+    final_MI = zeros(size(MI_map))
+
+    #swap rows
+    
+    for i in 1:a
+        if isodd(i)
+            println(Int64(floor(i/2)+1))
+            ordered_MI[(Int64(floor(i/2)+1)),:] = MI_map[i,:]
+        else
+            println((Int64(floor(i/2))) + Int64(a/2))
+            ordered_MI[(Int64(floor(i/2))) + Int64(a/2),:] = MI_map[i,:]
+        end
+    end
+    for j in 1:b
+        if isodd(j)
+            println(Int64(floor(j/2)+1))
+            final_MI[:,(Int64(floor(j/2)+1))] = ordered_MI[:,j]
+        else
+            println((Int64(floor(j/2))) + Int64(a/2))
+            final_MI[:, (Int64(floor(j/2))) + Int64(a/2)] = ordered_MI[:,j]
+        end
+    end
+    return final_MI
+end
+
 
 
 using OrderedCollections
