@@ -158,8 +158,5 @@ function plot_MI_coupling(I,n,th)
     th_entropies = [(i >= th) ? i : 0.0 for i in entropies]
     plot(scatter(x=n, xlabel = "MI", y=th_entropies, mode="markers+text", ), Layout(title = "Mutual Information between Site pairs", 
     xaxis_title="Mutual Information Value",
-    yaxis_title="Pairs",     
-    labels=attr(tickangle=90)
-
-))
+    yaxis_title="Pairs"))
 end
