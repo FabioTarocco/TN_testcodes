@@ -143,7 +143,7 @@ end
 
 using OrderedCollections
 
-function plot_MI_coupling(I,n)
+function plot_MI_coupling(I,n,th)
     mi_dict = OrderedDict();
     for  a in 1:n, b in a:n
         mi_dict[string(a)*" "*string(b)] = I[a,b];
@@ -152,6 +152,14 @@ function plot_MI_coupling(I,n)
     mi_dict=sort(mi_dict; byvalue=true, rev=true);
 
     println("Sorted values: ", mi_dict);
-    return mi_dict;
-end
+    n = [i for i=1:length(mi_dict)]
+    labels = mi_dict.keys
+    entropies = [i for i in values(mi_dict)]
+    th_entropies = [(i >= th) ? i : 0.0 for i in entropies]
+    plot(scatter(x=n, xlabel = "MI", y=th_entropies, mode="markers+text", ), Layout(title = "Mutual Information between Site pairs", 
+    xaxis_title="Mutual Information Value",
+    yaxis_title="Pairs",     
+    labels=attr(tickangle=90)
 
+))
+end

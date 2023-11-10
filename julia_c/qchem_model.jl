@@ -81,3 +81,6 @@ dmrg_en
 s =reorder_MI(I_matrixN)
 
 plot(heatmap(z=s, colorscale = "Viridis"))
+
+
+d = plot_MI_coupling(I_matrixN,size(dmrg_psi)[1], 0.0)
