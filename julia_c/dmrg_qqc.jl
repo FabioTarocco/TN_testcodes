@@ -1,3 +1,4 @@
+include(“qchem_model.jl”)
 using ITensors
 using ITensorChemistry
 

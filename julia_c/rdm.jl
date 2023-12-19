@@ -90,9 +90,9 @@ function reduced_rho(psi,i,j)
             rho *= psi[j];
         else
             #if j is not the last site, we need to get the link index between the j-th site and the j+1-th site
-            println("-----------------\nDEGUB\n------------------------");
-            @show (j,j+1);
-            @show (inds(psi[j]), inds(psi[j+1]));
+            #println("-----------------\nDEGUB\n------------------------");
+            #@show (j,j+1);
+            #@show (inds(psi[j]), inds(psi[j+1]));
             link_j = commonind(psi[j], psi[j+1]);
             #add to rho the j-th site of psi^dag priming the physical index and then add the j-th site of psi
             rho *= prime(psi_dag[j], "Site");

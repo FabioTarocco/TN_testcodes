@@ -9,11 +9,11 @@ function MI(rdm, d)
             delta_BB = delta(dag(inds(rho_AB)[4]), dag(inds(rho_AB)[3]))
             rho_B = delta_AA*rho_AB
             rho_A = delta_BB*rho_AB
-            @show reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),16,16)
+            #@show reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),16,16)
             S_AB = -tr(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),16,16) * log(reshape(Array(rho_AB,inds(rho_AB)[1], inds(rho_AB)[3], inds(rho_AB)[2], inds(rho_AB)[4]),16,16)))
             S_A = -tr(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2]) * log(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2])))
             S_B = -tr(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2]) * log(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2])))
-            
+            #=
             println("--------------------------\nRDM\n----------------------");
             println("\nRDM AB");
             @show rho_AB;
@@ -21,11 +21,13 @@ function MI(rdm, d)
             @show rho_A;
             println("\nRDM B");
             @show rho_B;
+            
             println("---------------------\nCheck norm\n------------------------");
             @show rho_AB*delta_AA*delta_BB;
             println("---------------\n ENTROPY\n-----------------------");
 
             @show S_A, S_B, S_AB, (a,b)
+            =#
             I_AB[a,b] =I_AB[b,a]= S_A + S_B - S_AB
             
         end
@@ -34,13 +36,14 @@ function MI(rdm, d)
 end
 
 function MI_diag(rdm, d::Int64=2)
+    mi_pairs = []
     @show size(rdm)
     I_AB = zeros(size(rdm))
     A,B = size(rdm)
     for a in 1:A
         for b in a+1:B
             rho_AB = copy(rdm[a,b]);
-            @show inds(rho_AB);
+            #@show inds(rho_AB);
             L_inds = (dag(inds(rho_AB)[1]), dag(inds(rho_AB)[3]));
             R_inds = (dag(inds(rho_AB)[2]), dag(inds(rho_AB)[4]));
             delta_AA = delta(dag(inds(rho_AB)[2]), dag(inds(rho_AB)[1]));
@@ -84,7 +87,7 @@ function MI_diag(rdm, d::Int64=2)
                     S_B -= p * log(p)
                 end
             end
-
+            #=
             println("--------------------------\nRDM\n----------------------");
             println("\nRDM AB");
             @show rho_AB;
@@ -103,12 +106,21 @@ function MI_diag(rdm, d::Int64=2)
             #S_A = -tr(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2]) * log(Array(rho_B, inds(rho_B)[1], inds(rho_B)[2])))
             #S_B = -tr(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2]) * log(Array(rho_A, inds(rho_A)[1], inds(rho_A)[2])))
             @show S_A, S_B, S_AB, (a,b);
-
-            I_AB[a,b] = I_AB[b,a] = S_A + S_B - S_AB;
-            
+            =#
+            I_AB[a,b] = I_AB[b,a] = real(S_A) + real(S_B) - real(S_AB);
         end
     end 
-    return I_AB
+
+
+    maxC = findmax(I_AB);
+    I_AB_n = I_AB./ maxC[1];
+
+    for a in 1:A
+        for b in a+1:B 
+            push!(mi_pairs, (a-1,b-1, I_AB_n[a,b]))
+        end
+    end
+    return I_AB_n, maxC[1], mi_pairs
 end
 
 function reorder_MI(MI_map)
@@ -120,19 +132,19 @@ function reorder_MI(MI_map)
     
     for i in 1:a
         if isodd(i)
-            println(Int64(floor(i/2)+1))
+            #println(Int64(floor(i/2)+1))
             ordered_MI[(Int64(floor(i/2)+1)),:] = MI_map[i,:]
         else
-            println((Int64(floor(i/2))) + Int64(a/2))
+            #println((Int64(floor(i/2))) + Int64(a/2))
             ordered_MI[(Int64(floor(i/2))) + Int64(a/2),:] = MI_map[i,:]
         end
     end
     for j in 1:b
         if isodd(j)
-            println(Int64(floor(j/2)+1))
+            #println(Int64(floor(j/2)+1))
             final_MI[:,(Int64(floor(j/2)+1))] = ordered_MI[:,j]
         else
-            println((Int64(floor(j/2))) + Int64(a/2))
+            #println((Int64(floor(j/2))) + Int64(a/2))
             final_MI[:, (Int64(floor(j/2))) + Int64(a/2)] = ordered_MI[:,j]
         end
     end

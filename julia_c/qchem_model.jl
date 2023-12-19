@@ -74,13 +74,14 @@ I_matrixN = I_matrix ./ maxC[1];
 
 using PlotlyJS
 plot(heatmap(z=I_matrixN, colorscale = "Viridis"))
-savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "./NH3_sto-3g_fermio.png")
+savefig(plot(heatmap(z=I_matrixN, colorscale = "Viridis")), "./LiH_sto-3g.png")
 dmrg_en
 
 
 s =reorder_MI(I_matrixN)
 
 plot(heatmap(z=s, colorscale = "Viridis"))
+savefig(plot(heatmap(z=s, colorscale = "Viridis")), "./LiH_sto-3g_ord.png")
 
 
 d = plot_MI_coupling(I_matrixN,size(dmrg_psi)[1], 0.0)
